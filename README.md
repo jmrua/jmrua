@@ -58,6 +58,12 @@ If you are working on something interesting, feel free to reach out.
 ---
 
 <!-- ORCID:START -->
+📚 Publications (from ORCID)
+
+- **2026** – [Intelligent Handover Solutions for Heterogeneous B5G Cellular Networks: Proposals and Full-Stack Evaluation](https://doi.org/10.1109/OJCOMS.2025.3649168)
+- **2025** – [5G Network Slicing as a Service Enabler for the Automotive Sector](https://doi.org/10.1002/eng2.13024)
+- **2024** – [5G Network Slicing as a Service Enabler for the Automotive Sector](https://doi.org/10.1002/eng2.13024)
+- **2024** – [A Simulator for FANETs Using 5G Vehicle-to-Everything Communications and Named-Data Networking](https://doi.org/10.1109/camad62243.2024.10942683)
 <!-- ORCID:END -->
 
 ---
