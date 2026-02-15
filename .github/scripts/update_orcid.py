@@ -8,7 +8,7 @@ and updates the README.md file with formatted publication list.
 
 import re
 import sys
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -48,7 +48,7 @@ def fetch_orcid_works() -> Dict:
         raise
 
 
-def extract_publication_info(work: Dict) -> Optional[Dict[str, any]]:
+def extract_publication_info(work: Dict) -> Optional[Dict[str, Any]]:
     """
     Extract relevant information from a work item.
     
@@ -103,7 +103,7 @@ def extract_publication_info(work: Dict) -> Optional[Dict[str, any]]:
         return None
 
 
-def format_publication(pub: Dict[str, any]) -> str:
+def format_publication(pub: Dict[str, Any]) -> str:
     """
     Format a publication as a Markdown list item.
     
