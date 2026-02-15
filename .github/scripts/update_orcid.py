@@ -140,18 +140,26 @@ def filter_duplicate_publications(publications: List[Dict[str, Any]]) -> List[Di
     unique_pubs = {}
     
     for pub in publications:
-        title = pub["title"]
+        title = pub.get("title")
+        if not title:
+            # Skip publications without a title
+            continue
         
         if title not in unique_pubs:
             unique_pubs[title] = pub
         else:
             # Compare years - keep the most recent
-            existing_year = unique_pubs[title].get("year") or 0
-            current_year = pub.get("year") or 0
+            # Treat None as negative infinity (older than any year)
+            existing_year = unique_pubs[title].get("year")
+            current_year = pub.get("year")
             
-            # If current publication is more recent, replace
-            if current_year > existing_year:
+            # If current has a year and existing doesn't, replace
+            if current_year is not None and existing_year is None:
                 unique_pubs[title] = pub
+            # If both have years and current is more recent, replace
+            elif current_year is not None and existing_year is not None and current_year > existing_year:
+                unique_pubs[title] = pub
+            # If neither has a year or existing is more recent, keep existing
     
     return list(unique_pubs.values())
 
