@@ -52,7 +52,7 @@ If you are working on something interesting, feel free to reach out.
 
 ## 📫 Contact
 
-- ✉️ jmrua@gti.uvigo.es  
+- ✉️ jmrua (at) gti.uvigo.es  
 - 🌍 Vigo, Spain  
 
 ---
