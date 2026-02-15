@@ -256,7 +256,7 @@ def update_readme(publications_content: str, software_content: str, readme_path:
         f"{re.escape(PUBLICATIONS_START_MARKER)}.*?{re.escape(PUBLICATIONS_END_MARKER)}",
         re.DOTALL
     )
-    content = pub_pattern.sub(pub_section, content)
+    new_readme = pub_pattern.sub(pub_section, content)
     
     # Replace software section
     soft_section = f"{SOFTWARE_START_MARKER}\n{software_content}\n{SOFTWARE_END_MARKER}"
@@ -264,14 +264,10 @@ def update_readme(publications_content: str, software_content: str, readme_path:
         f"{re.escape(SOFTWARE_START_MARKER)}.*?{re.escape(SOFTWARE_END_MARKER)}",
         re.DOTALL
     )
-    new_readme = soft_pattern.sub(soft_section, content)
-    
-    # Read original content again to check if anything changed
-    with open(readme_path, "r", encoding="utf-8") as f:
-        original_content = f.read()
+    new_readme = soft_pattern.sub(soft_section, new_readme)
     
     # Check if content changed
-    if new_readme == original_content:
+    if new_readme == content:
         print("No changes to README")
         return False
     
