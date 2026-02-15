@@ -8,7 +8,7 @@ and updates the README.md file with formatted publication list.
 
 import re
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
@@ -18,11 +18,15 @@ ORCID_ID = "0000-0001-5115-8578"
 ORCID_API_URL = f"https://pub.orcid.org/v3.0/{ORCID_ID}/works"
 
 # README markers
-START_MARKER = "<!-- ORCID:START -->"
-END_MARKER = "<!-- ORCID:END -->"
+PUBLICATIONS_START_MARKER = "<!-- ORCID-PUBLICATIONS:START -->"
+PUBLICATIONS_END_MARKER = "<!-- ORCID-PUBLICATIONS:END -->"
+SOFTWARE_START_MARKER = "<!-- ORCID-SOFTWARE:START -->"
+SOFTWARE_END_MARKER = "<!-- ORCID-SOFTWARE:END -->"
 
-# Accepted work types
-ACCEPTED_TYPES = {"journal-article", "conference-paper", "software", "research-tool"}
+# Work type categories
+PUBLICATION_TYPES = {"journal-article", "conference-paper"}
+SOFTWARE_TYPES = {"software", "research-tool"}
+ACCEPTED_TYPES = PUBLICATION_TYPES | SOFTWARE_TYPES
 
 
 def fetch_orcid_works() -> Dict:
@@ -164,51 +168,64 @@ def filter_duplicate_publications(publications: List[Dict[str, Any]]) -> List[Di
     return list(unique_pubs.values())
 
 
-def generate_publications_markdown(works_data: Dict) -> str:
+def generate_publications_markdown(works_data: Dict) -> Tuple[str, str]:
     """
-    Generate markdown content for publications section.
+    Generate markdown content for publications and software sections.
     
     Args:
         works_data: Dictionary containing ORCID works data
         
     Returns:
-        Formatted markdown string
+        Tuple of (publications_markdown, software_markdown)
     """
-    publications = []
+    all_works = []
     
-    # Extract and filter publications
+    # Extract all works
     work_groups = works_data.get("group", [])
     for group in work_groups:
         work_summaries = group.get("work-summary", [])
         for work in work_summaries:
             pub_info = extract_publication_info(work)
             if pub_info:
-                publications.append(pub_info)
+                all_works.append(pub_info)
     
-    # Filter duplicates
-    publications = filter_duplicate_publications(publications)
+    # Filter duplicates from all works
+    all_works = filter_duplicate_publications(all_works)
+    
+    # Separate publications and software
+    publications = [w for w in all_works if w.get("type") in PUBLICATION_TYPES]
+    software = [w for w in all_works if w.get("type") in SOFTWARE_TYPES]
     
     # Sort by year (descending), handling None values
     publications.sort(key=lambda x: x.get("year") or 0, reverse=True)
+    software.sort(key=lambda x: x.get("year") or 0, reverse=True)
     
-    # Generate markdown
-    markdown_lines = ["📚 Publications (from ORCID)", ""]
-    
+    # Generate publications markdown
+    pub_lines = ["📚 Publications", ""]
     if publications:
         for pub in publications:
-            markdown_lines.append(format_publication(pub))
+            pub_lines.append(format_publication(pub))
     else:
-        markdown_lines.append("*No publications found*")
+        pub_lines.append("*No publications found*")
     
-    return "\n".join(markdown_lines)
+    # Generate software markdown
+    soft_lines = ["💻 Software & Tools", ""]
+    if software:
+        for soft in software:
+            soft_lines.append(format_publication(soft))
+    else:
+        soft_lines.append("*No software found*")
+    
+    return "\n".join(pub_lines), "\n".join(soft_lines)
 
 
-def update_readme(new_content: str, readme_path: str = "README.md") -> bool:
+def update_readme(publications_content: str, software_content: str, readme_path: str = "README.md") -> bool:
     """
-    Update README.md with new publications content.
+    Update README.md with new publications and software content.
     
     Args:
-        new_content: New markdown content to insert
+        publications_content: New markdown content for publications section
+        software_content: New markdown content for software section
         readme_path: Path to README file
         
     Returns:
@@ -222,23 +239,39 @@ def update_readme(new_content: str, readme_path: str = "README.md") -> bool:
         return False
     
     # Check if markers exist
-    if START_MARKER not in content or END_MARKER not in content:
-        print(f"Error: Markers {START_MARKER} and {END_MARKER} not found in README",
-              file=sys.stderr)
+    has_publications_markers = (PUBLICATIONS_START_MARKER in content and 
+                                 PUBLICATIONS_END_MARKER in content)
+    has_software_markers = (SOFTWARE_START_MARKER in content and 
+                           SOFTWARE_END_MARKER in content)
+    
+    if not has_publications_markers or not has_software_markers:
+        print(f"Error: Required markers not found in README", file=sys.stderr)
+        print(f"  Publications markers: {has_publications_markers}", file=sys.stderr)
+        print(f"  Software markers: {has_software_markers}", file=sys.stderr)
         return False
     
-    # Create new content between markers
-    new_section = f"{START_MARKER}\n{new_content}\n{END_MARKER}"
-    
-    # Replace content between markers
-    pattern = re.compile(
-        f"{re.escape(START_MARKER)}.*?{re.escape(END_MARKER)}",
+    # Replace publications section
+    pub_section = f"{PUBLICATIONS_START_MARKER}\n{publications_content}\n{PUBLICATIONS_END_MARKER}"
+    pub_pattern = re.compile(
+        f"{re.escape(PUBLICATIONS_START_MARKER)}.*?{re.escape(PUBLICATIONS_END_MARKER)}",
         re.DOTALL
     )
-    new_readme = pattern.sub(new_section, content)
+    content = pub_pattern.sub(pub_section, content)
+    
+    # Replace software section
+    soft_section = f"{SOFTWARE_START_MARKER}\n{software_content}\n{SOFTWARE_END_MARKER}"
+    soft_pattern = re.compile(
+        f"{re.escape(SOFTWARE_START_MARKER)}.*?{re.escape(SOFTWARE_END_MARKER)}",
+        re.DOTALL
+    )
+    new_readme = soft_pattern.sub(soft_section, content)
+    
+    # Read original content again to check if anything changed
+    with open(readme_path, "r", encoding="utf-8") as f:
+        original_content = f.read()
     
     # Check if content changed
-    if new_readme == content:
+    if new_readme == original_content:
         print("No changes to README")
         return False
     
@@ -260,13 +293,13 @@ def main():
         works_data = fetch_orcid_works()
         
         print("Generating markdown content...")
-        markdown_content = generate_publications_markdown(works_data)
+        publications_content, software_content = generate_publications_markdown(works_data)
         
         print("Updating README...")
-        updated = update_readme(markdown_content)
+        updated = update_readme(publications_content, software_content)
         
         if updated:
-            print("✅ README updated with latest publications")
+            print("✅ README updated with latest publications and software")
             sys.exit(0)
         else:
             print("ℹ️ No changes needed")
