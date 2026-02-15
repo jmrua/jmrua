@@ -70,6 +70,7 @@ If you are working on something interesting, feel free to reach out.
 <!-- ORCID-SOFTWARE:START -->
 💻 Software & Tools
 
+- **2025** – [NS-3 5G V2V Energy Simulator](https://doi.org/10.5281/ZENODO.17192417)
 - **2025** – [End-to-end Handover Simulator for 5G Heterogeneous Network Enviroments](https://doi.org/10.5281/ZENODO.15772613)
 <!-- ORCID-SOFTWARE:END -->
 
