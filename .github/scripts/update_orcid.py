@@ -22,7 +22,7 @@ START_MARKER = "<!-- ORCID:START -->"
 END_MARKER = "<!-- ORCID:END -->"
 
 # Accepted work types
-ACCEPTED_TYPES = {"journal-article", "conference-paper"}
+ACCEPTED_TYPES = {"journal-article", "conference-paper", "software", "research-tool"}
 
 
 def fetch_orcid_works() -> Dict:
@@ -125,6 +125,37 @@ def format_publication(pub: Dict[str, Any]) -> str:
         return f"- **{year}** – {title}"
 
 
+def filter_duplicate_publications(publications: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Filter duplicate publications with the same title, keeping the most recent one.
+    
+    Args:
+        publications: List of publication dictionaries
+        
+    Returns:
+        List of publications with duplicates removed
+    """
+    # Use a dictionary to track publications by title
+    # Keep the one with the most recent year
+    unique_pubs = {}
+    
+    for pub in publications:
+        title = pub["title"]
+        
+        if title not in unique_pubs:
+            unique_pubs[title] = pub
+        else:
+            # Compare years - keep the most recent
+            existing_year = unique_pubs[title].get("year") or 0
+            current_year = pub.get("year") or 0
+            
+            # If current publication is more recent, replace
+            if current_year > existing_year:
+                unique_pubs[title] = pub
+    
+    return list(unique_pubs.values())
+
+
 def generate_publications_markdown(works_data: Dict) -> str:
     """
     Generate markdown content for publications section.
@@ -145,6 +176,9 @@ def generate_publications_markdown(works_data: Dict) -> str:
             pub_info = extract_publication_info(work)
             if pub_info:
                 publications.append(pub_info)
+    
+    # Filter duplicates
+    publications = filter_duplicate_publications(publications)
     
     # Sort by year (descending), handling None values
     publications.sort(key=lambda x: x.get("year") or 0, reverse=True)
